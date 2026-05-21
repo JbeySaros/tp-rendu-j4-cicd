@@ -2,12 +2,8 @@ pipeline {
     agent any
 
     options {
-        timestamps()
         skipDefaultCheckout(true)
-    }
-
-    parameters {
-        booleanParam(name: 'APPLY', defaultValue: false, description: 'Déploiement réel (sinon dry-run)')
+        timestamps()
     }
 
     stages {
@@ -21,46 +17,49 @@ pipeline {
 
         stage('Show Workspace') {
             steps {
-                sh 'ls -la'
+                sh 'ls -R'
             }
         }
 
         stage('Lint Ansible') {
             steps {
-                sh 'ansible-playbook -i inventory.ini site.yml --syntax-check'
+                dir('ansible') {
+                    sh 'ansible-playbook -i inventory.ini site.yml --syntax-check'
+                }
             }
         }
 
         stage('Dry Run') {
             steps {
-                sh 'ansible-playbook -i inventory.ini site.yml --check -vvv'
+                dir('ansible') {
+                    sh 'ansible-playbook -i inventory.ini site.yml --check'
+                }
             }
         }
 
         stage('Approval') {
-            when {
-                branch 'main'
-            }
             steps {
-                input message: "Valider le déploiement en production ?"
+                input message: 'Valider le déploiement ?', ok: 'Déployer'
             }
         }
 
         stage('Deploy') {
             when {
-                expression { return params.APPLY }
+                branch 'main'
             }
+
             steps {
-                sh 'ansible-playbook -i inventory.ini site.yml'
+                dir('ansible') {
+                    sh 'ansible-playbook -i inventory.ini site.yml'
+                }
             }
         }
 
         stage('Smoke Test') {
             steps {
                 sh '''
-                    echo "Smoke test"
-                    curl -I http://target1 || true
-                    curl -I http://target2 || true
+                    curl http://target1:5000/health
+                    curl http://target2:5000/health
                 '''
             }
         }
