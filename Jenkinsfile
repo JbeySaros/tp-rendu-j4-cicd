@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        APP_VERSION = "1.0.0"
+    }
+
     options {
         skipDefaultCheckout(true)
         timestamps()
