@@ -58,8 +58,8 @@ pipeline {
         stage('Smoke Test') {
             steps {
                 sh '''
-                    curl http://target1:5000/health
-                    curl http://target2:5000/health
+                docker exec target1 curl -f http://localhost:5000/health
+                docker exec target2 curl -f http://localhost:5000/health
                 '''
             }
         }
