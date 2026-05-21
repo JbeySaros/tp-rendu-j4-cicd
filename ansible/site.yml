@@ -38,13 +38,9 @@
       tags: [deploy]
 
     - name: Stopper l'ancienne instance Flask
-      ansible.builtin.shell: |
-        if pgrep -f "python3.*app.py" > /dev/null; then
-          pkill -f "python3.*app.py"
-        fi
-      ignore_errors: true
+      ansible.builtin.shell: pkill -f app.py || true
       changed_when: false
-
+      failed_when: false
     - name: Démarrer Flask en background
       ansible.builtin.shell: |
         cd {{ app_dir }}
